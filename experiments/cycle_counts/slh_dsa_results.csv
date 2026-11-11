@@ -1,0 +1,4 @@
+Operation,Baseline_SW_Cycles,Accelerated_HW_Cycles,Speedup
+KeyGen,1301078,67302,19.33
+Sign,477987,25597,18.67
+Verify,825728,44334,18.62

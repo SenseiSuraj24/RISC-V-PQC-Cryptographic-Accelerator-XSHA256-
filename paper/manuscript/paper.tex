@@ -1,0 +1,110 @@
+\documentclass[conference]{IEEEtran}
+\IEEEoverridecommandlockouts
+\usepackage{cite}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\usepackage{textcomp}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{url}
+
+\begin{document}
+
+\title{XSHA256: A Compact RISC-V Custom Instruction Extension for SHA-256 Acceleration in Post-Quantum SLH-DSA on Artix-7}
+
+\author{
+\IEEEauthorblockN{Research Team}
+\IEEEauthorblockA{\textit{Department of Computer Science and Engineering} \\
+\textit{Advanced Computer Architecture \& Cryptography Laboratory}\\
+November 2026}
+}
+
+\maketitle
+
+\begin{abstract}
+As cryptographic standards transition to quantum-resistant primitives, post-quantum digital signature algorithms such as SLH-DSA (FIPS 205) impose severe computational overheads on resource-constrained embedded processors. In SLH-DSA-SHA2-128s, evaluating deep hash chains and Merkle authentication paths consumes millions of CPU cycles, primarily dominated by the SHA-256 compression function. This paper presents \textbf{XSHA256}, a synthesizable, compact custom cryptographic coprocessor tightly coupled to a PicoRV32 RV32I processor via the Pico Co-Processor Interface (PCPI). Rather than offloading only fine-grained round computations, XSHA256 integrates an iterative datapath with an autonomous 16-word rolling message schedule expansion buffer, eliminating the memory and instruction overhead of computing extended message words in software. We evaluate two architectural granularities: fine-grained iterative round execution and autonomous block-level compression. Experimental evaluation on an AMD/Xilinx Artix-7 FPGA (XC7A35T) demonstrates that XSHA256 reduces SHA-256 block compression from 21,331 cycles to 1,672 cycles (12.75$\times$ speedup) using iterative round instructions, and down to 736 cycles (\textbf{28.98$\times$ speedup}) using block-level compression, while reducing instruction count by 96.8\%. When applied to an SLH-DSA-SHA2-128s workload, the accelerator achieves an end-to-end application speedup of \textbf{19.33$\times$} for Key Generation, \textbf{18.67$\times$} for Signing, and \textbf{18.62$\times$} for Verification. The entire coprocessor requires only 2,582 LUTs and 1,078 flip-flops (12.4\% of the Artix-7 device), with zero BRAM or DSP utilization, establishing a highly efficient design point for lightweight post-quantum secure edge devices.
+\end{abstract}
+
+\begin{IEEEkeywords}
+RISC-V, PicoRV32, Cryptographic Acceleration, SHA-256, Post-Quantum Cryptography, SLH-DSA, PCPI, Artix-7 FPGA, Hardware/Software Co-Design.
+\end{IEEEkeywords}
+
+\section{Introduction}
+Post-quantum cryptography (PQC) has become an urgent mandate following the standardization of stateless hash-based digital signatures by NIST in FIPS 205 (SLH-DSA, formerly SPHINCS+). Unlike public-key schemes based on discrete logarithms or integer factorization (e.g., RSA, ECDSA), hash-based signatures rely exclusively on the collision- and preimage-resistance of underlying cryptographic hash functions, most notably SHA-256 and SHA-512.
+
+However, stateless hash-based signatures require the generation and traversal of multi-layer hypertree structures and Winternitz One-Time Signatures (WOTS+). In the SLH-DSA-SHA2-128s parameter set, a single signature generation or verification operation executes tens of thousands of hash compression calls. On lightweight embedded processors implementing the 32-bit RISC-V base integer instruction set (RV32I), such as PicoRV32, the pure software execution of SHA-256 is severely bottlenecks by word rotation, non-linear logic, and above all, the 64-word message schedule expansion ($W_t$).
+
+To resolve this bottleneck without incurring the silicon area and power penalties of large autonomous DMA crypto engines, we propose \textbf{XSHA256}, a hardware/software co-designed custom instruction extension integrated into PicoRV32 through its standard Pico Co-Processor Interface (PCPI).
+
+\section{Related Work and Literature Gap}
+Prior work on accelerating hashing on RISC-V falls into three distinct categories:
+\begin{enumerate}
+    \item \textbf{Scalar RISC-V Cryptography Extensions (Zknh)}: The official RISC-V Cryptography specification includes scalar instructions (`sha256sig0`, `sha256sig1`, `sha256sum0`, `sha256sum1`). While these instructions accelerate bitwise rotate-and-xor calculations within existing integer registers, the CPU core still must execute all load/store, scheduling address calculations, and round loop branches in software.
+    \item \textbf{Memory-Mapped Autonomous Accelerators}: AXI/Wishbone DMA accelerators offload hashing by streaming memory buffers. However, for small, fine-grained hash calls (e.g., single 32-byte chain steps in WOTS+), bus contention, register configuration, and interrupt latency dominate execution time.
+    \item \textbf{PicoRV32 PCPI Accelerators}: Prior PCPI co-processors have primarily focused on multiplication, division, or AES S-boxes.
+\end{enumerate}
+
+\textbf{Our Contribution}: XSHA256 introduces an architecture where the hardware accelerator owns both the iterative compression datapath and a 16-word circular message schedule generator. This paper experimentally compares fine-grained round instructions versus coarse-grained block compression, synthesizes the complete SoC for Artix-7, and quantifies the end-to-end acceleration on an SLH-DSA-SHA2-128s workload.
+
+\section{XSHA256 Custom ISA Architecture}
+All instructions are mapped into the RISC-V standard custom-0 opcode space (`opcode = 7'b0001011` / `0x0B`). The extension uses standard R-type encoding:
+\begin{itemize}
+    \item \texttt{sha256.init}: Resets internal $A..H$ state registers to standard FIPS 180-4 initial vectors ($H^{(0)}$) and clears schedule pointers ($t=0$).
+    \item \texttt{sha256.load rs1}: Pushes a 32-bit big-endian message word from $rs1$ into the circular schedule buffer $W[0..15]$.
+    \item \texttt{sha256.round}: Executes a single SHA-256 compression round in hardware datapath and advances round index $t$. For $t \ge 16$, the circular buffer dynamically expands $W_t$.
+    \item \texttt{sha256.getstate rd, rs1}: Copies 32-bit state register $H[rs1[2:0]]$ into destination register $rd$.
+    \item \texttt{sha256.compress}: Autonomous block compression executing all 64 rounds in 64 accelerator clock cycles with `pcpi_wait` handshaking.
+\end{itemize}
+
+\section{RTL Implementation \& Schedule Design}
+The message schedule expands 16 message words into 64 words:
+\begin{equation}
+W_t = \sigma_1(W_{t-2}) + W_{t-7} + \sigma_0(W_{t-15}) + W_{t-16}
+\end{equation}
+To minimize area, XSHA256 stores only 16 words ($W[0..15]$). When $t \ge 16$, the hardware reads historical entries using modulo-16 indexing:
+\begin{align*}
+idx_{t-2}  &= (t - 2) \pmod{16} \\
+idx_{t-7}  &= (t - 7) \pmod{16} \\
+idx_{t-15} &= (t - 15) \pmod{16} \\
+idx_{t-16} &= (t - 16) \pmod{16} = t \pmod{16}
+\end{align*}
+The newly computed $W_t$ is utilized immediately by the round datapath and then latched into $W[t \pmod{16}]$ at the clock edge, overwriting $W_{t-16}$ which is never referenced again. This reduces register storage from 2,048 flip-flops to 512 flip-flops.
+
+\section{Experimental Evaluation}
+The complete system was implemented, simulated, and benchmarked on a synthesizable PicoRV32 SoC with 128~KB unified RAM, 64-bit cycle counters, and retirement instruction counters.
+
+\subsection{Primitive-Level Results}
+Table~\ref{tab:primitive_benchmark} presents the measured cycle counts, instruction counts, and CPI for processing a 512-bit SHA-256 block across the evaluated configurations.
+
+\input{../tables/table_primitive_benchmark.tex}
+
+As seen in Table~\ref{tab:primitive_benchmark}, C3 (XSHA256 Round) achieves a 12.75$\times$ speedup by offloading schedule calculation and datapath arithmetic into single-cycle custom instructions. C4 (XSHA256 Block) eliminates instruction fetch, decode, and loop branching entirely, yielding a \textbf{28.98$\times$ speedup} and requiring only 736 CPU cycles per block.
+
+\subsection{SLH-DSA-SHA2-128s Application-Level Acceleration}
+We integrated XSHA256 into the core operations of SLH-DSA-SHA2-128s, replacing software hash primitives with hardware acceleration. Table~\ref{tab:slhdsa_benchmark} details the measured speedups across KeyGen, Sign, and Verify.
+
+\input{../tables/table_slhdsa_benchmark.tex}
+
+In accordance with hypothesis H4, the application-level speedup is slightly lower than the 28.98$\times$ primitive speedup due to address calculation and buffer formatting routines remaining in software (Amdahl's law), but achieves an impressive \textbf{18.6$\times$--19.3$\times$} end-to-end acceleration.
+
+\subsection{FPGA Resource Utilization}
+The design was synthesized for an AMD/Xilinx Artix-7 FPGA (XC7A35T-1CSG324C). Table~\ref{tab:fpga_utilization} reports the hardware resource utilization.
+
+\input{../tables/table_fpga_utilization.tex}
+
+The entire XSHA256 coprocessor consumes only 2,582 LUTs and 1,078 FFs, representing 12.4\% of the Artix-7 fabric, with zero BRAM or DSP slice consumption.
+
+\section{Conclusion}
+This paper presented XSHA256, a custom cryptographic instruction extension for PicoRV32. By combining a 16-word rolling message schedule buffer with an iterative compression datapath, XSHA256 achieves a 28.98$\times$ speedup for SHA-256 and an 18.6$\times$--19.3$\times$ speedup on post-quantum SLH-DSA-SHA2-128s, with an area footprint well within the constraints of low-cost Artix-7 FPGAs.
+
+\bibliographystyle{IEEEtran}
+\begin{thebibliography}{00}
+\bibitem{fips205} NIST, ``Stateless Hash-Based Digital Signature Standard,'' FIPS PUB 205, Aug. 2024.
+\bibitem{fips180} NIST, ``Secure Hash Standard (SHS),'' FIPS PUB 180-4, Aug. 2015.
+\bibitem{picorv32} C. Wolf, ``PicoRV32 - A Size-Optimized RISC-V CPU,'' YosysHQ, 2019.
+\bibitem{riscvcrypto} RISC-V International, ``RISC-V Cryptography Extensions Volume I: Scalar & Entropy Source Instructions,'' Version 1.0.1, 2021.
+\end{thebibliography}
+
+\end{document}
+

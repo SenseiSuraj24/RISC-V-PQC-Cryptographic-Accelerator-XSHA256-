@@ -1,0 +1,15 @@
+\begin{table}[htbp]
+\centering
+\caption{SHA-256 Primitive-Level Performance Comparison on PicoRV32}
+\label{tab:primitive_benchmark}
+\begin{tabular}{llrrrr}
+\hline
+\textbf{Config} & \textbf{Architecture Description} & \textbf{Cycles/Block} & \textbf{Instructions} & \textbf{CPI} & \textbf{Speedup} \\
+\hline
+C1 & RV32I Software Baseline & 21,331 & 5,336 & 4.00 & 1.00$\times$ \\
+C2 & RV32I + Reference Crypto (Zknh Emulation) & 21,335 & 5,337 & 4.00 & 0.99$\times$ \\
+C3 & RV32I + XSHA256 Round PCPI (Proposed Fine-Grained) & 1,672 & 359 & 4.66 & 12.75$\times$ \\
+C4 & RV32I + XSHA256 Block PCPI (Proposed Coarse-Grained) & 736 & 172 & 4.28 & \textbf{28.98$\times$} \\
+\hline
+\end{tabular}
+\end{table}

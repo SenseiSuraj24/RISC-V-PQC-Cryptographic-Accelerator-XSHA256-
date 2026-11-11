@@ -1,0 +1,14 @@
+\begin{table}[htbp]
+\centering
+\caption{SLH-DSA-SHA2-128s End-to-End Cryptographic Workload Performance}
+\label{tab:slhdsa_benchmark}
+\begin{tabular}{lrrr}
+\hline
+\textbf{Workload Operation} & \textbf{Baseline RV32I (Cycles)} & \textbf{Accelerated XSHA256 (Cycles)} & \textbf{Speedup} \\
+\hline
+Key Generation (KeyGen) & 1,301,078 & 67,302 & \textbf{19.33$\times$} \\
+Signature Generation (Sign) & 477,987 & 25,597 & \textbf{18.67$\times$} \\
+Signature Verification (Verify) & 825,728 & 44,334 & \textbf{18.62$\times$} \\
+\hline
+\end{tabular}
+\end{table}

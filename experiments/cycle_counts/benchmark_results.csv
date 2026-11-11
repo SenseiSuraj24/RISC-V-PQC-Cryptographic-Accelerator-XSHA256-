@@ -1,0 +1,5 @@
+Config,Name,Cycles,Instructions,CPI,Speedup_vs_C1
+C1,RV32I Pure SW,21331,5336,4.0,1.0
+C2,RV32I + Zknh Scalar Ref,21335,5337,4.0,0.99
+C3,RV32I + XSHA256 Round PCPI,1672,359,4.66,12.75
+C4,RV32I + XSHA256 Block PCPI,736,172,4.28,28.98

@@ -1,0 +1,15 @@
+\begin{table}[htbp]
+\centering
+\caption{AMD/Xilinx Artix-7 (XC7A35T-1CSG324C) Synthesis and Resource Utilization}
+\label{tab:fpga_utilization}
+\begin{tabular}{lrrrrr}
+\hline
+\textbf{Subsystem} & \textbf{LUTs} & \textbf{Flip-Flops (FF)} & \textbf{Carry4} & \textbf{BRAM} & \textbf{DSP} \\
+\hline
+XSHA256 PCPI Accelerator Unit & 2,582 & 1,078 & 102 & 0 & 0 \\
+Complete SoC (PicoRV32 + 128KB RAM + XSHA256) & 7,170 & 1,883 & 233 & 0 & 0 \\
+Artix-7 Device Available Capacity (XC7A35T) & 20,800 & 41,600 & 5,200 & 50 & 90 \\
+XSHA256 Accelerator \% of Artix-7 & 12.4\% & 2.6\% & 1.9\% & 0.0\% & 0.0\% \\
+\hline
+\end{tabular}
+\end{table}

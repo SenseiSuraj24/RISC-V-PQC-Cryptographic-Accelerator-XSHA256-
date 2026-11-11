@@ -1,0 +1,34 @@
+[
+  {
+    "Config": "C1",
+    "Name": "RV32I Pure SW",
+    "Cycles": 21331,
+    "Instructions": 5336,
+    "CPI": 4.0,
+    "Speedup_vs_C1": 1.0
+  },
+  {
+    "Config": "C2",
+    "Name": "RV32I + Zknh Scalar Ref",
+    "Cycles": 21335,
+    "Instructions": 5337,
+    "CPI": 4.0,
+    "Speedup_vs_C1": 0.99
+  },
+  {
+    "Config": "C3",
+    "Name": "RV32I + XSHA256 Round PCPI",
+    "Cycles": 1672,
+    "Instructions": 359,
+    "CPI": 4.66,
+    "Speedup_vs_C1": 12.75
+  },
+  {
+    "Config": "C4",
+    "Name": "RV32I + XSHA256 Block PCPI",
+    "Cycles": 736,
+    "Instructions": 172,
+    "CPI": 4.28,
+    "Speedup_vs_C1": 28.98
+  }
+]

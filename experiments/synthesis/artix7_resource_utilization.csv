@@ -1,0 +1,3 @@
+Module,LUTs,FFs,CARRY4,BRAM,DSPs,Target_FPGA
+XSHA256 PCPI Accelerator,2582,1078,102,0,0,Xilinx Artix-7 (xc7a35tcsg324-1)
+Complete RISC-V SoC (CPU+Mem+XSHA256),7170,1883,233,0,0,Xilinx Artix-7 (xc7a35tcsg324-1)
