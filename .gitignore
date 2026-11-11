@@ -1,0 +1,19 @@
+# Git ignore rules for RISC-V PQC project
+build/
+*.o
+*.elf
+*.bin
+*.hex
+*.dump
+sim_*
+soc_sim
+a.out
+.venv/
+tools/
+__pycache__/
+*.vcd
+*.bit
+
+
+# Exclude PDF files
+*.pdf
