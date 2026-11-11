@@ -1,0 +1,17 @@
+# NIST FIPS 180-4 Standard Known-Answer Test Vectors (SHA-256)
+
+Vector 1:
+Input: "abc"
+Length: 3 bytes (24 bits)
+Digest: ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad
+
+Vector 2:
+Input: "" (empty string)
+Length: 0 bytes (0 bits)
+Digest: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+
+Vector 3:
+Input: "abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq"
+Length: 56 bytes (448 bits)
+Digest: 248d6a61d20638b8e5c026930c3e6039a33ce45964ff2167f6ecedd419db06c1
+
