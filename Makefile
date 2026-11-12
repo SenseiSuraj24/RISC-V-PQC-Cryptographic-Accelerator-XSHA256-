@@ -1,6 +1,6 @@
 SHELL := /bin/bash
 
-.PHONY: all software sim tb_sha tb_pcpi synth plots pdf clean test help
+.PHONY: all software sim tb_sha tb_pcpi synth plots pdf clean test proof help
 
 all: software sim
 
@@ -52,6 +52,9 @@ plots:
 
 pdf:
 	python3 scripts/generate_presentation_pdf.py
+
+proof:
+	bash scripts/run_proofs.sh
 
 test: tb_sha tb_pcpi sim
 
