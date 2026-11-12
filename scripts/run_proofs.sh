@@ -14,7 +14,7 @@ PROOF="testbench/proof"
 
 mkdir -p build/proof
 
-RTL_SRCS="$RTL/sha256_constants.sv $RTL/sha256_round.sv $RTL/sha256_schedule.sv $RTL/sha256_core.sv"
+RTL_SRCS="$RTL/sha256_constants.sv $RTL/sha256_round.sv $RTL/sha256_schedule.sv $RTL/sha256_core.sv rtl/pcpi/xsha256_pcpi.sv"
 
 PASS=0
 FAIL=0
@@ -29,12 +29,12 @@ run_proof() {
     echo "  PROOF: sha256.${name}"
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
-    $IVERILOG -g2012 -I$RTL -o "$bin" $RTL_SRCS "$PROOF/$tb" 2>&1
+    $IVERILOG -g2012 -I$RTL -I$PROOF -o "$bin" $RTL_SRCS "$PROOF/$tb" 2>&1
 
     output=$($VVP "$bin" 2>&1)
     echo "$output"
 
-    if echo "$output" | grep -q "PASSED"; then
+    if echo "$output" | grep -q "PROOF RESULT:.*PASSED"; then
         PASS=$((PASS + 1))
         RESULTS+=("  ✅  sha256.${name}")
     else
@@ -69,5 +69,8 @@ if [ "$FAIL" -eq 0 ]; then
     echo ""
     echo "  🎓 ALL PROOFS PASSED — XSHA256 instructions correctly"
     echo "     implement SHA-256 per NIST FIPS 180-4"
+else
+    exit 1
 fi
 echo "============================================================"
+

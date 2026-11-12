@@ -12,6 +12,7 @@ help:
 	@echo "  make sim      : Run full PicoRV32 SoC simulation"
 	@echo "  make tb_sha   : Run standalone SHA-256 RTL core testbench"
 	@echo "  make tb_pcpi  : Run standalone PCPI interface testbench"
+	@echo "  make proof    : Run per-instruction FIPS 180-4 proof suite"
 	@echo "  make synth    : Run Artix-7 FPGA synthesis using Yosys"
 	@echo "  make plots    : Generate CSVs, LaTeX tables, and plots"
 	@echo "  make pdf      : Generate complete presentation & defense PDF"
@@ -56,7 +57,7 @@ pdf:
 proof:
 	bash scripts/run_proofs.sh
 
-test: tb_sha tb_pcpi sim
+test: proof tb_sha tb_pcpi sim
 
 clean:
 	rm -rf build/*.elf build/*.bin build/*.hex build/*.dump build/*sim*
